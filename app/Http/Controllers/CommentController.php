@@ -5,6 +5,7 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Post;
 use App\Comment;
 use App\User;
 
@@ -23,8 +24,8 @@ class CommentController extends Controller
         } else {
             $comments=Comment::all();
         }
-        $comments= array_reverse(Comment::all());
-        return view('comment.index',compact('comments'))/*->with('posts', $posts)*/;
+        //return view('home',compact('comments'));
+        return view('home', ['comments'=> $comments]);
     }
 
     /**
@@ -46,19 +47,21 @@ class CommentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, Post $post)
     {
         $user = Auth::user();
 
         $comment = new Comment();
-        $comment->comment = $comment->get('comment');
+        $comment->comment = $request->get('comment');
         $comment->post_id = $post->id;
         $comment->user_id = $user->id;
 
         $comment->save();
 
-        return redirect('comment');
+        return back();
 
+        // return back();
+        // return view('home', compact('comments'));
 
     }
 
@@ -119,6 +122,6 @@ class CommentController extends Controller
         $data = Comment::find($id);
         $data->delete();
 
-        return redirect('comments');
+        return back();
     }
 }

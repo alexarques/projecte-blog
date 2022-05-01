@@ -12,11 +12,12 @@
                             {{ session('status') }}
                         </div>
                     @endif
-                    <form method="GET" action="">
+                    <form method="POST" action="{{ route('posts.update', $post->id) }}">
                         @csrf
+                        @method('PUT')
                         <label>Title:</label><br>
-                        <input type="text" id="title" name="title" style="width: 380px" required><br><br>
-                        <textarea id="contents" name="contents" cols="40" rows="5"></textarea><br><br>
+                        <input type="text" id="title" name="title" style="width: 380px" value="{{$post->title}}"><br><br>
+                        <input type="text" id="contents" name="contents" style="width: 650px;" value="{{$post->contents}}"><br><br>
                         <input class="btn btn-primary" type="submit" value="Post">
                     </form>
                     {{-- {{ __('You are logged in!') }} --}}

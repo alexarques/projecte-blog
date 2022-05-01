@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use App\Post;
 use App\Comment;
 use App\User;
+use App\Tag;
 
 class PostController extends Controller
 {
@@ -26,7 +27,7 @@ class PostController extends Controller
             $posts=Post::all();
         }
 
-        return view('posts.index',compact('posts'))/*->with('posts', $posts)*/;
+        return view('home',compact('posts'))/*->with('posts', $posts)*/;
     }
 
     /**
@@ -60,28 +61,20 @@ class PostController extends Controller
         $post->title = $request->get('title');
         $post->contents = $request->get('contents');
         $post->user_id = $user->id;
+        $tags = explode(',', $request->get('tags'));
 
         $post->save();
 
-        
-        return back();
-
-
-    }
-
-    public function commstore(Request $request)
-    {
-        $user = Auth::user();
-        $post = Post::all();
-        $_SESSION["postall"] = $post;
-        $_SESSION["commall"] = Comment::all();
-
-        $comment = new Comment();
-        $comment->comment = $request->get('comment');
-        $comment->post_id = /*$post->id*/1;
-        $comment->user_id = $user->id;
-
-        $comment->save();
+        if(count($tags) > 1){
+            foreach($tags as $tag) {
+                $t=Tag::create(['tag'=>$tag]);
+                $post->tags()->attach($t);
+            }
+        } else {
+            $tags = $request->get('tags');
+            $t=Tag::create(['tag'=>$tags]);
+            $post->tags()->attach($t);
+        }
 
         return back();
 
@@ -105,16 +98,12 @@ class PostController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function edit($id)
+    public function edit(Post $post)
     {
-        // $validateData=$request->validate([
-        //     'title' => 'string|unique:posts|max:90',
-        //     'contents' => 'string'
-
-        // ]);
-        // $post->update($validateData);
         // return back();
-        return view('edit');
+        // $post = Post::where('id',$post->id);
+        // setcookie('post', $post->id);
+        return view('posts.edit', ['post' => $post]);
     }
 
     /**
@@ -124,16 +113,22 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Post $post)
     {
-        $post = Post::where('id',$id);
-        $post->title = $request->get('title');
-        $post->contents = $request->get('contents');
-        $post->user_id = $post->user_id;
+        // $post = Post::find($_COOKIE['post']);
+        // $post->title = $request->get('title');
+        // $post->contents = $request->get('contents');
+        // $post->user_id = $post->user_id;
 
-        $post->save();
-        /*Post::where('id',3)->update(['title'=>'Updated title']);*/
-        return back();
+        // $post->save();
+
+        $validateData=$request->validate([
+            'title' => 'string|unique:posts|max:90',
+            'contents' => 'string'
+        ]);
+
+        $post->update($validateData);
+        return redirect('/');
 
     }
 
@@ -143,12 +138,18 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Post $post)
     {
-        $data = Post::find($id);
-        $data->delete();
+        $post->comments()->get()->delete();
+        $post->delete();
 
-        // return redirect('posts');
         return back();
     }
+
+    public function searching(Request $request)
+    {
+        $results = Post::where("title",'like',$request->texto."%")->take(10)->get();
+        return view("home",compact("results"));        
+    }
+
 }
